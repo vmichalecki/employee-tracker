@@ -59,34 +59,48 @@ const loadMenu = () => {
             if (answer.menu === 'View roles') {
                 readRoles();
             }
+            if (answer.menu === 'Add role') {
+                addRole();
+            }
             if (answer.menu === 'View departments') {
                 readDepartments();
+            }
+            if (answer.menu === 'Add department') {
+                addDepartment();
             }
 
         })
 }
 
-// const createDepartment = () => {
+// const addRole = () => {
 //     inquirer
 //         .prompt([
 //             {
-//                 name: 'department',
-//                 type: 'input',
-//                 message: 'What\'s the Department name?',
+//                 name: 'roleId',
+//                 type: 'number',
+//                 message: 'What\'s the role ID?',
 //             },
 //             {
-//                 name: 'departmentId',
-//                 type: 'number',
-//                 message: 'What\'s the Department ID?',
+//                 name: 'title',
+//                 type: 'input',
+//                 message: 'What\'s the title?',
 //             },
+//             {
+//                 name: 'salary',
+//                 type: 'input',
+//                 message: 'What\'s the salary?'
+//             }
+
 //         ])
 //         .then((answer) => {
 //             console.log(answer);
 //             connection.query(
-//                 'INSERT INTO department SET ?',
+//                 'INSERT INTO role SET ?',
 //                 {
-//                     name: answer.department,
-//                     id: answer.departmentId,
+//                     id: answer.roleId,
+//                     title: answer.title,
+//                     salary: answer.salary,
+//                     department_id:
 //                 },
 //                 (err, res) => {
 //                     if (err) throw err;
@@ -96,6 +110,37 @@ const loadMenu = () => {
 //             readDepartment();
 //         })
 // };
+
+const addDepartment = () => {
+    inquirer
+        .prompt([
+            {
+                name: 'department',
+                type: 'input',
+                message: 'What\'s the Department name?',
+            },
+            {
+                name: 'departmentId',
+                type: 'number',
+                message: 'What\'s the Department ID?',
+            },
+        ])
+        .then((answer) => {
+            console.log(answer);
+            connection.query(
+                'INSERT INTO department SET ?',
+                {
+                    name: answer.department,
+                    id: answer.departmentId,
+                },
+                (err, res) => {
+                    if (err) throw err;
+                    console.log(`${res.affectedRows} Done!\n`);
+                }
+            );
+            readDepartments();
+        })
+};
 
 const readEmployees = () => {
     connection.query('SELECT * FROM employee', (err, res) => {

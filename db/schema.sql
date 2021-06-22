@@ -10,7 +10,7 @@ CREATE TABLE department (
 );
 
 CREATE TABLE role (
-    id INT not NULL PRIMARY KEY,
+    id INT not NULL PRIMARY KEY DEFAULT 0,
     title VARCHAR(30) not NULL,
     salary DECIMAL(10, 2) not NULL,
     department_id INT not NULL,
