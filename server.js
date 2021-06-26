@@ -29,6 +29,7 @@ const loadMenu = () => {
                 message: "What would you like to do?",
                 choices: [
                     "View all employees",
+                    "View employees by department",
                     "Add employee",
                     "Update employee role",
                     "View roles",
@@ -42,6 +43,9 @@ const loadMenu = () => {
         .then((answer) => {
             if (answer.menu === "View all employees") {
                 readEmployees();
+            }
+            if (answer.menu === "View employees by department") {
+                viewByDepartment();
             }
             if (answer.menu === "Add employee") {
                 addEmployee();
@@ -61,7 +65,40 @@ const loadMenu = () => {
             if (answer.menu === "Add department") {
                 addDepartment();
             }
+            if (answer.menu === "QUIT") {
+                quit();
+            }
         });
+};
+
+const loadDeptInfo = () => {
+    departmentInfo = []
+    connection.query("SELECT * FROM department", (err, res) => {
+        if (err) throw err;
+        res.forEach(index => {
+            departmentInfo.push({ name: index.name, value: index.id })
+        });
+    })
+};
+
+const loadRoleInfo = () => {
+    roleInfo = []
+    connection.query("SELECT * FROM role", (err, res) => {
+        if (err) throw err;
+        res.forEach(index => {
+            roleInfo.push(index.title)
+        });
+    })
+};
+
+const loadEmployeeInfo = () => {
+    employeeInfo = []
+    connection.query("SELECT * FROM employee", (err, res) => {
+        if (err) throw err;
+        res.forEach(index => {
+            employeeInfo.push(`${index.id} ${index.first_name} ${index.last_name}`)
+        });
+    })
 };
 
 const readEmployees = () => {
@@ -75,9 +112,37 @@ const readEmployees = () => {
     connection.query(queryString, (err, res) => {
         if (err) throw err;
         console.table(res);
-        connection.end();
     });
+    loadMenu();
 };
+
+const viewByDepartment = () => {
+    inquirer
+        .prompt([
+            {
+                name: "department",
+                type: "list",
+                choices: departmentInfo,
+                message: 'Which department would you like to view?'
+            }
+        ])
+        .then((answer) => {
+            console.log(answer);
+            let queryString =
+                'SELECT employee.id, employee.first_name, employee.last_name, department.name FROM employee JOIN role ON employee.role_id = role.id JOIN department ON department.id = role.department_id WHERE department.id = ?';
+            connection.query(queryString, answer.department, (err, res) => {
+                if (err) throw err;
+                console.table(res);
+                loadMenu();
+            }
+            );
+
+        })
+}
+
+// view employees by department
+// inquirer asks what department
+// select * from employee left join role on employee.role_id = role.id left join department on role.department_id = department.id where department = answer.department
 
 const addEmployee = () => {
     inquirer
@@ -132,8 +197,7 @@ const updateEmployeeRole = () => {
         .then((answer) => {
             connection.query(
                 // const newRole = answer.roleInfo,
-                `UPDATE employee SET role_id = ${roleInfo.indexOf(answer.role) + 1} WHERE employee.id = ${answer.employee}`,
-                [roleInfo.indexOf(answer.role) + 1],
+                `UPDATE employee SET role_id = ${roleInfo.indexOf(answer.role) + 1} WHERE employee.id = ${answer.employee[0]} `,
                 (err, res) => {
                     if (err) throw err;
                     console.log(`${res.affectedRows} Done!\n`);
@@ -141,31 +205,15 @@ const updateEmployeeRole = () => {
             );
             readEmployees();
         });
-}
+};
 
-const addDepartment = () => {
-    inquirer
-        .prompt([
-            {
-                name: "department",
-                type: "input",
-                message: "What's the Department name?",
-            },
-        ])
-        .then((answer) => {
-            console.log(answer);
-            connection.query(
-                "INSERT INTO department SET ?",
-                {
-                    name: answer.department,
-                },
-                (err, res) => {
-                    if (err) throw err;
-                    console.log(`${res.affectedRows} Done!\n`);
-                }
-            );
-            readDepartments();
-        });
+const readRoles = () => {
+    connection.query("SELECT * FROM role", (err, res) => {
+        if (err) throw err;
+        // console.log(res)
+        console.table(res);
+    });
+    loadMenu();
 };
 
 const addRole = () => {
@@ -202,57 +250,46 @@ const addRole = () => {
         });
 };
 
-const readRoles = () => {
-    connection.query("SELECT * FROM role", (err, res) => {
-        if (err) throw err;
-        // console.log(res)
-        console.table(res);
-    });
-};
-
 const readDepartments = () => {
     connection.query("SELECT * FROM department", (err, res) => {
         if (err) throw err;
         console.table(res);
     });
+    loadMenu();
 };
 
-const loadDeptInfo = () => {
-    departmentInfo = []
-    connection.query("SELECT * FROM department", (err, res) => {
-        if (err) throw err;
-        res.forEach(index => {
-            departmentInfo.push(index.name)
+const addDepartment = () => {
+    inquirer
+        .prompt([
+            {
+                name: "department",
+                type: "input",
+                message: "What's the Department name?",
+            },
+        ])
+        .then((answer) => {
+            console.log(answer);
+            connection.query(
+                "INSERT INTO department SET ?",
+                {
+                    name: answer.department,
+                },
+                (err, res) => {
+                    if (err) throw err;
+                    console.log(`${res.affectedRows} Done!\n`);
+                }
+            );
+            readDepartments();
         });
-    })
 };
 
-const loadRoleInfo = () => {
-    roleInfo = []
-    connection.query("SELECT * FROM role", (err, res) => {
-        if (err) throw err;
-        res.forEach(index => {
-            roleInfo.push(index.title)
-        });
-    })
-};
-
-const loadEmployeeInfo = () => {
-    employeeInfo = []
-    connection.query("SELECT * FROM employee", (err, res) => {
-        if (err) throw err;
-        res.forEach(index => {
-            employeeInfo.push(index.id)
-        });
-    })
-};
+const quit = () => {
+    connection.end();
+}
 
 connection.connect((err) => {
     if (err) throw err;
-    console.log(`connected as id ${connection.threadId}`);
+    console.log(`connected as id ${connection.threadId} `);
     loadMenu();
 });
 
-// view employees by department
-// inquirer asks what department
-// select * from employee left join role on employee.role_id = role.id left join department on role.department_id = department.id where department = answer.department
