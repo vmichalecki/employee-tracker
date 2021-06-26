@@ -1,24 +1,9 @@
-// loadprompts (inquirer choices)
-// selecting a choice will go to that function
-// view all employees
-// view employees by department
-// view employees by manager
-// add employee
-// remove emplyee
-// update employee role
-// update employee manager
-// view roles
-// add role
-// remove role
-// view departments
-// add department
-// remove department
-// quit
 // Dependencies
 const mysql = require("mysql");
 const inquirer = require("inquirer");
 require("console.table");
 require('dotenv').config();
+
 // Connection to MySQL database
 const connection = mysql.createConnection({
     host: "localhost",
@@ -27,9 +12,15 @@ const connection = mysql.createConnection({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
 });
-let departmentInfo = []
+
+let departmentInfo = [];
+let roleInfo = [];
+let employeeInfo = [];
+
 const loadMenu = () => {
-    loadDeptInfo()
+    loadDeptInfo();
+    loadRoleInfo();
+    loadEmployeeInfo();
     inquirer
         .prompt([
             {
@@ -38,16 +29,12 @@ const loadMenu = () => {
                 message: "What would you like to do?",
                 choices: [
                     "View all employees",
-                    "View employees by department",
                     "Add employee",
-                    "Remove employee",
                     "Update employee role",
                     "View roles",
                     "Add role",
-                    "Remove role",
                     "View departments",
                     "Add department",
-                    "Remove department",
                     "QUIT",
                 ],
             },
@@ -55,6 +42,12 @@ const loadMenu = () => {
         .then((answer) => {
             if (answer.menu === "View all employees") {
                 readEmployees();
+            }
+            if (answer.menu === "Add employee") {
+                addEmployee();
+            }
+            if (answer.menu === "Update employee role") {
+                updateEmployeeRole();
             }
             if (answer.menu === "View roles") {
                 readRoles();
@@ -70,6 +63,86 @@ const loadMenu = () => {
             }
         });
 };
+
+const readEmployees = () => {
+    let queryString = `
+  SELECT employee.id, first_name, last_name, title, salary, name AS department_name
+  FROM employee
+  LEFT JOIN role
+  ON role_id = role.id
+  LEFT JOIN department
+  ON department_id = department.id`
+    connection.query(queryString, (err, res) => {
+        if (err) throw err;
+        console.table(res);
+        connection.end();
+    });
+};
+
+const addEmployee = () => {
+    inquirer
+        .prompt([
+            {
+                name: "firstName",
+                type: "input",
+                message: "Enter the employee\'s first name."
+            },
+            {
+                name: "lastName",
+                type: "input",
+                message: "Enter the employee\'s last name."
+            },
+            {
+                name: "role",
+                type: "list",
+                choices: roleInfo,
+                message: "Select the employee\'s role."
+            },
+        ])
+        .then((answer) => {
+            console.log(roleInfo.indexOf(answer.role));
+            connection.query(
+                "INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)",
+                [answer.firstName, answer.lastName, roleInfo.indexOf(answer.role) + 1],
+                (err, res) => {
+                    if (err) throw err;
+                    console.log(`${res.affectedRows} Done!\n`);
+                }
+            );
+            readEmployees();
+        })
+};
+
+const updateEmployeeRole = () => {
+    inquirer
+        .prompt([
+            {
+                name: "employee",
+                type: "list",
+                choices: employeeInfo,
+                message: "Which employee would you like to update?",
+            },
+            {
+                name: "role",
+                type: "list",
+                choices: roleInfo,
+                message: "What is their new role?"
+            }
+        ])
+        .then((answer) => {
+            connection.query(
+                // const newRole = answer.roleInfo,
+                `UPDATE employee SET role_id = ${roleInfo.indexOf(answer.role) + 1} WHERE employee.id = ${answer.employee}`,
+                [roleInfo.indexOf(answer.role) + 1],
+                (err, res) => {
+                    if (err) throw err;
+                    console.log(`${res.affectedRows} Done!\n`);
+                }
+            );
+            readEmployees();
+        });
+}
+
 const addDepartment = () => {
     inquirer
         .prompt([
@@ -78,11 +151,6 @@ const addDepartment = () => {
                 type: "input",
                 message: "What's the Department name?",
             },
-            {
-                name: "departmentId",
-                type: "number",
-                message: "What's the Department ID?",
-            },
         ])
         .then((answer) => {
             console.log(answer);
@@ -90,7 +158,6 @@ const addDepartment = () => {
                 "INSERT INTO department SET ?",
                 {
                     name: answer.department,
-                    id: answer.departmentId,
                 },
                 (err, res) => {
                     if (err) throw err;
@@ -100,6 +167,7 @@ const addDepartment = () => {
             readDepartments();
         });
 };
+
 const addRole = () => {
     inquirer
         .prompt([
@@ -123,30 +191,17 @@ const addRole = () => {
         .then((answer) => {
             console.log(departmentInfo.indexOf(answer.depId) + 1);
             connection.query(
-                "INSERT INTO role (title, salary, department_id) VALUES(?, ?, ?)",
+                "INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)",
                 [answer.title, answer.salary, departmentInfo.indexOf(answer.depId) + 1],
                 (err, res) => {
                     if (err) throw err;
                     console.log(`${res.affectedRows} Done!\n`);
                 }
             );
-            readDepartments();
+            readRoles();
         });
 };
-const readEmployees = () => {
-    let queryString = `
-  SELECT first_name, last_name, title, salary, name AS department_name
-  FROM employee
-  LEFT JOIN role
-  ON role_id = role.id
-  LEFT JOIN department
-  ON department_id = department.id`
-    connection.query(queryString, (err, res) => {
-        if (err) throw err;
-        console.table(res);
-        connection.end();
-    });
-};
+
 const readRoles = () => {
     connection.query("SELECT * FROM role", (err, res) => {
         if (err) throw err;
@@ -154,12 +209,14 @@ const readRoles = () => {
         console.table(res);
     });
 };
+
 const readDepartments = () => {
     connection.query("SELECT * FROM department", (err, res) => {
         if (err) throw err;
         console.table(res);
     });
 };
+
 const loadDeptInfo = () => {
     departmentInfo = []
     connection.query("SELECT * FROM department", (err, res) => {
@@ -168,12 +225,34 @@ const loadDeptInfo = () => {
             departmentInfo.push(index.name)
         });
     })
-}
-// view employees by department
-// inquirer asks what department
-// select * from employee left join role on employee.role_id = role.id left join department on role.department_id = department.id where department = answer.department
+};
+
+const loadRoleInfo = () => {
+    roleInfo = []
+    connection.query("SELECT * FROM role", (err, res) => {
+        if (err) throw err;
+        res.forEach(index => {
+            roleInfo.push(index.title)
+        });
+    })
+};
+
+const loadEmployeeInfo = () => {
+    employeeInfo = []
+    connection.query("SELECT * FROM employee", (err, res) => {
+        if (err) throw err;
+        res.forEach(index => {
+            employeeInfo.push(index.id)
+        });
+    })
+};
+
 connection.connect((err) => {
     if (err) throw err;
     console.log(`connected as id ${connection.threadId}`);
     loadMenu();
 });
+
+// view employees by department
+// inquirer asks what department
+// select * from employee left join role on employee.role_id = role.id left join department on role.department_id = department.id where department = answer.department

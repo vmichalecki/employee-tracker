@@ -1,10 +1,12 @@
 USE employees_db;
+
 INSERT INTO department(name)
 VALUES
     ('Sales'),
     ('Engineering'),
     ('Finance'),
     ('Legal');
+
 INSERT INTO role(title, salary, department_id)
 VALUES
     ('Sales Lead', 100000.00, 1),
@@ -15,6 +17,7 @@ VALUES
     ('Lawyer', 190000.00, 4),
     ('Finance Lead', 16000.00, 3),
     ('Accountant', 125000.00, 3);
+    
 INSERT INTO employee(first_name, last_name, role_id)
 VALUES
     ('Valerie', 'Michalecki', 2),
