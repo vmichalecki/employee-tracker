@@ -32,6 +32,7 @@ const loadMenu = () => {
                     "View employees by department",
                     "Add employee",
                     "Update employee role",
+                    "Delete employee",
                     "View roles",
                     "Add role",
                     "View departments",
@@ -52,6 +53,9 @@ const loadMenu = () => {
             }
             if (answer.menu === "Update employee role") {
                 updateEmployeeRole();
+            }
+            if (answer.menu === "Delete employee") {
+                deleteEmployee();
             }
             if (answer.menu === "View roles") {
                 readRoles();
@@ -204,6 +208,27 @@ const updateEmployeeRole = () => {
         });
 };
 
+const deleteEmployee = () => {
+    inquirer
+        .prompt([
+            {
+                name: "employee",
+                type: "list",
+                choices: employeeInfo,
+                message: "Which employee would you like to delete?"
+            }
+        ])
+        .then((answer) => {
+            connection.query(`DELETE FROM employee WHERE id = ${answer.employee[0]}`,
+                (err, res) => {
+                    if (err) throw err;
+                    console.log(`${res.affectedRows} Done!\n`);
+                }
+            );
+            readEmployees();
+        });
+}
+
 const readRoles = () => {
     connection.query("SELECT * FROM role", (err, res) => {
         if (err) throw err;
@@ -214,6 +239,7 @@ const readRoles = () => {
 
 };
 
+// Why does the id jump from 8 to 13?
 const addRole = () => {
     inquirer
         .prompt([
