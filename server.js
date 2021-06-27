@@ -86,7 +86,7 @@ const loadRoleInfo = () => {
     connection.query("SELECT * FROM role", (err, res) => {
         if (err) throw err;
         res.forEach(index => {
-            roleInfo.push(index.title)
+            roleInfo.push({ name: index.title, value: index.id });
         });
     })
 };
@@ -112,8 +112,9 @@ const readEmployees = () => {
     connection.query(queryString, (err, res) => {
         if (err) throw err;
         console.table(res);
+        loadMenu();
     });
-    loadMenu();
+
 };
 
 const viewByDepartment = () => {
@@ -140,10 +141,6 @@ const viewByDepartment = () => {
         })
 }
 
-// view employees by department
-// inquirer asks what department
-// select * from employee left join role on employee.role_id = role.id left join department on role.department_id = department.id where department = answer.department
-
 const addEmployee = () => {
     inquirer
         .prompt([
@@ -168,7 +165,7 @@ const addEmployee = () => {
             console.log(roleInfo.indexOf(answer.role));
             connection.query(
                 "INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)",
-                [answer.firstName, answer.lastName, roleInfo.indexOf(answer.role) + 1],
+                [answer.firstName, answer.lastName, answer.role],
                 (err, res) => {
                     if (err) throw err;
                     console.log(`${res.affectedRows} Done!\n`);
@@ -195,9 +192,9 @@ const updateEmployeeRole = () => {
             }
         ])
         .then((answer) => {
-            connection.query(
-                // const newRole = answer.roleInfo,
-                `UPDATE employee SET role_id = ${roleInfo.indexOf(answer.role) + 1} WHERE employee.id = ${answer.employee[0]} `,
+            console.log(answer.role);
+            console.log(answer.employee);
+            connection.query(`UPDATE employee SET role_id = ${answer.role} WHERE id = ${answer.employee[0]}`,
                 (err, res) => {
                     if (err) throw err;
                     console.log(`${res.affectedRows} Done!\n`);
@@ -212,8 +209,9 @@ const readRoles = () => {
         if (err) throw err;
         // console.log(res)
         console.table(res);
+        loadMenu();
     });
-    loadMenu();
+
 };
 
 const addRole = () => {
@@ -237,10 +235,9 @@ const addRole = () => {
             },
         ])
         .then((answer) => {
-            console.log(departmentInfo.indexOf(answer.depId) + 1);
             connection.query(
                 "INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)",
-                [answer.title, answer.salary, departmentInfo.indexOf(answer.depId) + 1],
+                [answer.title, answer.salary, answer.depId],
                 (err, res) => {
                     if (err) throw err;
                     console.log(`${res.affectedRows} Done!\n`);
@@ -254,8 +251,9 @@ const readDepartments = () => {
     connection.query("SELECT * FROM department", (err, res) => {
         if (err) throw err;
         console.table(res);
+        loadMenu();
     });
-    loadMenu();
+
 };
 
 const addDepartment = () => {
@@ -292,4 +290,3 @@ connection.connect((err) => {
     console.log(`connected as id ${connection.threadId} `);
     loadMenu();
 });
-
