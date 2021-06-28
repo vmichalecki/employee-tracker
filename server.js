@@ -113,7 +113,7 @@ const loadRoleInfo = () => {
 };
 
 const loadEmployeeInfo = () => {
-    employeeInfo = []
+    // employeeInfo = []
     connection.query("SELECT * FROM employee", (err, res) => {
         if (err) throw err;
         res.forEach(index => {
@@ -231,7 +231,7 @@ const deleteEmployee = () => {
             }
         ])
         .then((answer) => {
-            connection.query(`DELETE FROM employee WHERE id = ${answer.employee[0]}`,
+            connection.query(`DELETE FROM employee WHERE id = ${answer.employee.split(" ", 1)}`,
                 (err, res) => {
                     if (err) throw err;
                     console.log(`${res.affectedRows} Done!\n`);
