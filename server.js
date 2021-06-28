@@ -210,7 +210,7 @@ const updateEmployeeRole = () => {
             }
         ])
         .then((answer) => {
-            connection.query(`UPDATE employee SET role_id = ${answer.role} WHERE id = ${answer.employee[0]}`,
+            connection.query(`UPDATE employee SET role_id = ${answer.role} WHERE id = ${answer.employee.split(" ", 1)}`,
                 (err, res) => {
                     if (err) throw err;
                     console.log(`${res.affectedRows} Done!\n`);
