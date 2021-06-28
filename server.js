@@ -3,6 +3,7 @@ const mysql = require("mysql");
 const inquirer = require("inquirer");
 require("console.table");
 require('dotenv').config();
+var figlet = require('figlet');
 
 // Connection to MySQL database
 const connection = mysql.createConnection({
@@ -13,10 +14,22 @@ const connection = mysql.createConnection({
     database: process.env.DB_NAME,
 });
 
+// Empty arrays to push data into
 let departmentInfo = [];
 let roleInfo = [];
 let employeeInfo = [];
 
+// ASCII art
+figlet('Employee Tracker', function (err, data) {
+    if (err) {
+        console.log('Something went wrong...');
+        console.dir(err);
+        return;
+    }
+    console.log(data)
+});
+
+// Functions
 const loadMenu = () => {
     loadDeptInfo();
     loadRoleInfo();
@@ -42,35 +55,39 @@ const loadMenu = () => {
             },
         ])
         .then((answer) => {
-            if (answer.menu === "View all employees") {
-                readEmployees();
-            }
-            if (answer.menu === "View employees by department") {
-                viewByDepartment();
-            }
-            if (answer.menu === "Add employee") {
-                addEmployee();
-            }
-            if (answer.menu === "Update employee role") {
-                updateEmployeeRole();
-            }
-            if (answer.menu === "Delete employee") {
-                deleteEmployee();
-            }
-            if (answer.menu === "View roles") {
-                readRoles();
-            }
-            if (answer.menu === "Add role") {
-                addRole();
-            }
-            if (answer.menu === "View departments") {
-                readDepartments();
-            }
-            if (answer.menu === "Add department") {
-                addDepartment();
-            }
-            if (answer.menu === "QUIT") {
-                quit();
+            switch (answer.menu) {
+                case "View all employees":
+                    readEmployees();
+                    break;
+                case "View employees by department":
+                    viewByDepartment();
+                    break;
+                case "Add employee":
+                    addEmployee();
+                    break;
+                case "Update employee role":
+                    updateEmployeeRole();
+                    break;
+                case "Delete employee":
+                    deleteEmployee();
+                    break;
+                case "View roles":
+                    readRoles();
+                    break;
+                case "Add role":
+                    addRole();
+                    break;
+                case "View departments":
+                    readDepartments();
+                    break;
+                case "Add department":
+                    addDepartment();
+                    break;
+                case "QUIT":
+                    quit();
+                    break;
+                default:
+                    quit();
             }
         });
 };
@@ -118,7 +135,6 @@ const readEmployees = () => {
         console.table(res);
         loadMenu();
     });
-
 };
 
 const viewByDepartment = () => {
@@ -166,7 +182,6 @@ const addEmployee = () => {
             },
         ])
         .then((answer) => {
-            console.log(roleInfo.indexOf(answer.role));
             connection.query(
                 "INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?)",
                 [answer.firstName, answer.lastName, answer.role],
@@ -176,7 +191,7 @@ const addEmployee = () => {
                 }
             );
             readEmployees();
-        })
+        });
 };
 
 const updateEmployeeRole = () => {
@@ -196,8 +211,6 @@ const updateEmployeeRole = () => {
             }
         ])
         .then((answer) => {
-            console.log(answer.role);
-            console.log(answer.employee);
             connection.query(`UPDATE employee SET role_id = ${answer.role} WHERE id = ${answer.employee[0]}`,
                 (err, res) => {
                     if (err) throw err;
@@ -232,14 +245,11 @@ const deleteEmployee = () => {
 const readRoles = () => {
     connection.query("SELECT * FROM role", (err, res) => {
         if (err) throw err;
-        // console.log(res)
         console.table(res);
         loadMenu();
     });
-
 };
 
-// Why does the id jump from 8 to 13?
 const addRole = () => {
     inquirer
         .prompt([
